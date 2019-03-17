@@ -8,6 +8,7 @@ import { tokenUrl, instanceLocator } from './config';
 // import Message from './components/Message';
 class App extends React.Component {
   state = {
+    roomId: [],
     messages: [],
     joinableRooms: [],
     joinedRooms: []
@@ -21,21 +22,29 @@ class App extends React.Component {
         url: tokenUrl
       })
     });
-    chatManager.connect().then(currentUser => {
-      this.currentUser = currentUser;
-      this.currentUser
-        .getJoinableRooms()
-        .then(joinableRooms => {
-          this.setState({
-            joinableRooms,
-            joinedRooms: this.currentUser.rooms
-          });
-        })
-        .catch(err => console.log('error on joinabel roos', err));
-
-      currentUser.subscribeToRoom({
-        roomId: 19385890,
-
+    chatManager
+      .connect()
+      .then(currentUser => {
+        this.currentUser = currentUser;
+        this.getRooms();
+      })
+      .catch(err => console.log('error on joinabel roos', err));
+  }
+  getRooms = () => {
+    this.currentUser.getJoinableRooms().then(joinableRooms => {
+      this.setState({
+        joinableRooms,
+        joinedRooms: this.currentUser.rooms
+      });
+    });
+  };
+  subscribeToRoom = roomId => {
+    this.setState({
+      messages: []
+    });
+    this.currentUser
+      .subscribeToRoom({
+        roomId,
         hooks: {
           onNewMessage: message => {
             this.setState({
@@ -43,13 +52,19 @@ class App extends React.Component {
             });
           }
         }
-      });
-    });
-  }
+      })
+      .then(room => {
+        this.setState({
+          roomId
+        });
+        this.getRooms();
+      })
+      .catch(err => console.log('error on joinabel roos', err));
+  };
   sendMessage = text => {
     this.currentUser.sendMessage({
       text,
-      roomId: 19385890
+      roomId: this.state.roomId
     });
   };
 
@@ -57,6 +72,7 @@ class App extends React.Component {
     return (
       <div className="app">
         <RoomList
+          subscribeToRoom={this.subscribeToRoom}
           rooms={[...this.state.joinableRooms, ...this.state.joinedRooms]}
         />
         <MessageList messages={this.state.messages} />
