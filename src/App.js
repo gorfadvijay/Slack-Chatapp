@@ -7,12 +7,10 @@ import Chatkit from '@pusher/chatkit';
 import { tokenUrl, instanceLocator } from './config';
 // import Message from './components/Message';
 class App extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      messages: []
-    };
-  }
+  state = {
+    messages: []
+  };
+
   componentDidMount() {
     const chatManager = new Chatkit.ChatManager({
       instanceLocator,
@@ -21,30 +19,33 @@ class App extends React.Component {
         url: tokenUrl
       })
     });
-    chatManager
-      .connect()
-      .then(currentUser => {
-        currentUser.subscribeToRoom({
-          roomId: 19385890,
-          hooks: {
-            onNewMessage: message => {
-              this.setState({
-                messages: [...this.state.messages, message]
-              });
-            }
+    chatManager.connect().then(currentUser => {
+      this.currentUser = currentUser;
+      currentUser.subscribeToRoom({
+        roomId: 19385890,
+
+        hooks: {
+          onNewMessage: message => {
+            this.setState({
+              messages: [...this.state.messages, message]
+            });
           }
-        });
-      })
-      .catch(error => {
-        console.error('error:', error);
+        }
       });
+    });
   }
+  sendMessage = text => {
+    this.currentUser.sendMessage({
+      text,
+      roomId: 19385890
+    });
+  };
   render() {
     return (
       <div className="app">
         <RoomList />
         <MessageList messages={this.state.messages} />
-        <SendMessageForm />
+        <SendMessageForm sendMessage={this.sendMessage} />
         <NewRoomForm />
       </div>
     );
