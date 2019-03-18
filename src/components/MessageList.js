@@ -1,7 +1,11 @@
 import React from 'react';
+import reactDOM from 'react-dom';
 import Message from './Message';
 
 class MessageList extends React.Component {
+  componentDidUpdate() {
+    const node = ReactDOM;
+  }
   render() {
     return (
       <div className="message-list">
